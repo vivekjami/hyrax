@@ -1,0 +1,44 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Hyrax docker-compose
+#
+# This compose file runs the Hyrax bridge service.
+# SigNoz must be running separately — see README.md for the one-liner.
+#
+# Quick start:
+#   git clone https://github.com/SigNoz/signoz && cd signoz/deploy && ./install.sh
+#   cd - && docker compose up -d
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  hyrax:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hyrax:latest
+    container_name: hyrax
+    restart: unless-stopped
+    ports:
+      - "${HYRAX_PORT:-5050}:5050"
+    environment:
+      # OTLP endpoint — SigNoz's otel-collector by default.
+      # Change to http://host.docker.internal:4317 if SigNoz runs on the host.
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT:-http://host.docker.internal:4317}"
+      OTEL_EXPORTER_OTLP_INSECURE: "${OTEL_EXPORTER_OTLP_INSECURE:-true}"
+      HYRAX_PORT: "5050"
+      HYRAX_HOST: "0.0.0.0"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      HYRAX_DEBUG_SPANS: "${HYRAX_DEBUG_SPANS:-false}"
+      HYRAX_BATCH_SIZE: "${HYRAX_BATCH_SIZE:-64}"
+      HYRAX_EXPORT_TIMEOUT_MS: "${HYRAX_EXPORT_TIMEOUT_MS:-10000}"
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:5050/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    extra_hosts:
+      # Allows container to reach services on the host machine
+      - "host.docker.internal:host-gateway"

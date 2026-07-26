@@ -1,0 +1,120 @@
+version: 2
+
+# ─── Seeds ───────────────────────────────────────────────────────────────────
+seeds:
+  - name: raw_orders
+    description: "Raw e-commerce orders seeded from CSV."
+    columns:
+      - name: order_id
+        description: "Unique order identifier."
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+      - name: status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['completed', 'shipped', 'placed', 'returned', 'return_pending']
+      - name: amount
+        tests:
+          - not_null
+
+  - name: raw_customers
+    description: "Raw customer master data."
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+      - name: plan
+        tests:
+          - accepted_values:
+              values: ['free', 'pro', 'enterprise']
+
+  - name: raw_payments
+    description: "Raw payment transactions."
+    columns:
+      - name: payment_id
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        tests:
+          - not_null
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['success', 'refunded', 'pending', 'failed']
+
+# ─── Staging models ──────────────────────────────────────────────────────────
+models:
+  - name: stg_orders
+    description: >
+      Cleaned and typed order records. Null amounts and invalid statuses
+      are rejected by upstream seed tests.
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['completed', 'shipped', 'placed', 'returned', 'return_pending']
+      - name: amount
+        tests:
+          - not_null
+
+  - name: stg_customers
+    description: "Cleaned customer records with value segment."
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+      - name: value_segment
+        tests:
+          - accepted_values:
+              values: ['high', 'medium', 'low']
+
+  - name: stg_payments
+    description: "Cleaned payment records."
+    columns:
+      - name: payment_id
+        tests:
+          - unique
+          - not_null
+
+# ─── Mart models ─────────────────────────────────────────────────────────────
+  - name: fct_orders
+    description: >
+      Order fact table joined with payments. recognised_revenue = 0 for
+      orders that are not both completed and paid.
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: recognised_revenue
+        tests:
+          - not_null
+
+  - name: fct_customer_ltv
+    description: >
+      Customer lifetime value mart. One row per customer. ltv_tier classifies
+      customers by cumulative recognised revenue.
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+      - name: ltv_tier
+        tests:
+          - accepted_values:
+              values: ['champion', 'loyal', 'potential', 'new']

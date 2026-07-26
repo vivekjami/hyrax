@@ -1,0 +1,154 @@
+{
+  "uuid": "hyrax-pipeline-observability-v1",
+  "title": "Hyrax — Pipeline Observability",
+  "description": "Data pipeline health: duration, failure rate, freshness lag, and dbt test assertions. Powered by Hyrax (OpenLineage → OpenTelemetry bridge).",
+  "tags": ["data-pipelines", "openlineage", "dbt", "hyrax"],
+  "layout": [
+    { "i": "row-header-runs",     "x": 0,  "y": 0,  "w": 24, "h": 1 },
+    { "i": "runs-total",          "x": 0,  "y": 1,  "w": 6,  "h": 2 },
+    { "i": "runs-success-rate",   "x": 6,  "y": 1,  "w": 6,  "h": 2 },
+    { "i": "avg-duration",        "x": 12, "y": 1,  "w": 6,  "h": 2 },
+    { "i": "freshness-lag-p95",   "x": 18, "y": 1,  "w": 6,  "h": 2 },
+    { "i": "row-header-duration", "x": 0,  "y": 3,  "w": 24, "h": 1 },
+    { "i": "duration-trend",      "x": 0,  "y": 4,  "w": 16, "h": 6 },
+    { "i": "p95-by-job",          "x": 16, "y": 4,  "w": 8,  "h": 6 },
+    { "i": "row-header-failures", "x": 0,  "y": 10, "w": 24, "h": 1 },
+    { "i": "failure-hotspots",    "x": 0,  "y": 11, "w": 12, "h": 6 },
+    { "i": "test-assertions",     "x": 12, "y": 11, "w": 12, "h": 6 },
+    { "i": "row-header-lineage",  "x": 0,  "y": 17, "w": 24, "h": 1 },
+    { "i": "freshness-lag-chart", "x": 0,  "y": 18, "w": 12, "h": 6 },
+    { "i": "row-count-trend",     "x": 12, "y": 18, "w": 12, "h": 6 }
+  ],
+  "widgets": [
+    {
+      "id": "row-header-runs",
+      "type": "row",
+      "title": "Pipeline Run Summary"
+    },
+    {
+      "id": "runs-total",
+      "type": "value",
+      "title": "Total Runs (24h)",
+      "query": {
+        "queryType": "metrics",
+        "promQL": "sum(increase(pipeline_runs_total[24h]))"
+      },
+      "thresholds": []
+    },
+    {
+      "id": "runs-success-rate",
+      "type": "value",
+      "title": "Success Rate (24h)",
+      "query": {
+        "queryType": "metrics",
+        "promQL": "100 * sum(increase(pipeline_runs_total{status=\"success\"}[24h])) / sum(increase(pipeline_runs_total[24h]))"
+      },
+      "unit": "percent",
+      "thresholds": [
+        { "index": 0, "value": 95, "color": "#27AE60" },
+        { "index": 1, "value": 80, "color": "#F39C12" },
+        { "index": 2, "value": 0,  "color": "#E74C3C" }
+      ]
+    },
+    {
+      "id": "avg-duration",
+      "type": "value",
+      "title": "Avg Duration (ms)",
+      "query": {
+        "queryType": "metrics",
+        "promQL": "avg(rate(pipeline_duration_ms_sum[1h])) / avg(rate(pipeline_duration_ms_count[1h]))"
+      },
+      "unit": "ms"
+    },
+    {
+      "id": "freshness-lag-p95",
+      "type": "value",
+      "title": "Freshness Lag p95 (s)",
+      "query": {
+        "queryType": "metrics",
+        "promQL": "histogram_quantile(0.95, sum(rate(pipeline_freshness_lag_s_bucket[1h])) by (le))"
+      },
+      "unit": "s",
+      "thresholds": [
+        { "index": 0, "value": 3600, "color": "#E74C3C" },
+        { "index": 1, "value": 1800, "color": "#F39C12" },
+        { "index": 2, "value": 0,    "color": "#27AE60" }
+      ]
+    },
+    {
+      "id": "row-header-duration",
+      "type": "row",
+      "title": "Duration Trends"
+    },
+    {
+      "id": "duration-trend",
+      "type": "graph",
+      "title": "Pipeline Duration Trend (7 days)",
+      "query": {
+        "queryType": "metrics",
+        "promQL": "avg by (job_name) (rate(pipeline_duration_ms_sum[30m])) / avg by (job_name) (rate(pipeline_duration_ms_count[30m]))"
+      },
+      "unit": "ms",
+      "legend": { "enabled": true }
+    },
+    {
+      "id": "p95-by-job",
+      "type": "table",
+      "title": "p95 Latency by Job",
+      "query": {
+        "queryType": "metrics",
+        "promQL": "histogram_quantile(0.95, sum by (job_name, le) (rate(pipeline_duration_ms_bucket[1h])))"
+      },
+      "columns": ["job_name", "p95_ms"]
+    },
+    {
+      "id": "row-header-failures",
+      "type": "row",
+      "title": "Failures & Data Quality"
+    },
+    {
+      "id": "failure-hotspots",
+      "type": "table",
+      "title": "Failure Hotspots (top jobs by error rate, 24h)",
+      "query": {
+        "queryType": "metrics",
+        "promQL": "topk(10, sum by (job_name, job_namespace) (increase(pipeline_runs_total{status=\"failure\"}[24h])))"
+      },
+      "columns": ["job_namespace", "job_name", "failure_count"]
+    },
+    {
+      "id": "test-assertions",
+      "type": "graph",
+      "title": "dbt Test Assertions — Passed vs Failed",
+      "query": {
+        "queryType": "metrics",
+        "promQL": "sum by (result) (increase(pipeline_test_assertions_total[1h]))"
+      },
+      "legend": { "enabled": true }
+    },
+    {
+      "id": "row-header-lineage",
+      "type": "row",
+      "title": "Data Freshness & Volume"
+    },
+    {
+      "id": "freshness-lag-chart",
+      "type": "graph",
+      "title": "Freshness Lag by Dataset (seconds behind schedule)",
+      "query": {
+        "queryType": "metrics",
+        "promQL": "histogram_quantile(0.50, sum by (job_name, le) (rate(pipeline_freshness_lag_s_bucket[30m])))"
+      },
+      "unit": "s"
+    },
+    {
+      "id": "row-count-trend",
+      "type": "graph",
+      "title": "Output Row Count Trend",
+      "query": {
+        "queryType": "metrics",
+        "promQL": "sum by (job_name) (increase(pipeline_row_count_sum[30m]))"
+      }
+    }
+  ]
+}

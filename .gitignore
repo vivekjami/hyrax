@@ -219,3 +219,11 @@ __marimo__/
 
 
 .ideas/
+
+# dbt
+demo/dbt_project/target/
+demo/dbt_project/dbt_packages/
+demo/dbt_project/logs/
+demo/dbt_project/*.duckdb
+demo/dbt_project/*.duckdb.wal
+*.bak

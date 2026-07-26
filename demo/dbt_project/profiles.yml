@@ -1,0 +1,9 @@
+hyrax_demo:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DBT_DUCKDB_PATH', 'hyrax_demo.duckdb') }}"
+      threads: 4
+      extensions:
+        - httpfs
