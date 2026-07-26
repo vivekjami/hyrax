@@ -16,7 +16,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEMO_DIR="$REPO_ROOT/demo/dbt_project"
 HYRAX_PORT="${HYRAX_PORT:-5050}"
 OTLP_ENDPOINT="${OTEL_EXPORTER_OTLP_ENDPOINT:-http://localhost:4317}"
-SIGNOZ_UI="${SIGNOZ_UI:-http://localhost:3301}"
+SIGNOZ_UI="${SIGNOZ_UI:-http://localhost:8080}"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'

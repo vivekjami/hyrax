@@ -16,7 +16,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEMO_DIR="$REPO_ROOT/demo/dbt_project"
 SEED="$DEMO_DIR/seeds/raw_orders.csv"
 HYRAX_PORT="${HYRAX_PORT:-5050}"
-SIGNOZ_UI="${SIGNOZ_UI:-http://localhost:3301}"
+SIGNOZ_UI="${SIGNOZ_UI:-http://localhost:8080}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

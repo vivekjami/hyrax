@@ -54,20 +54,22 @@ Full field mapping: [SCHEMA.md](./SCHEMA.md)
 
 ### Prerequisites
 
-- [SigNoz](https://signoz.io/docs/install/docker/) running locally — one command:
+- **SigNoz** — installed via Foundry (current official method):
   ```bash
-  git clone https://github.com/SigNoz/signoz.git
-  cd signoz/deploy && ./install.sh
+  curl -fsSL https://signoz.io/foundry.sh | bash
+  foundryctl cast -f casting.yaml   # casting.yaml included in this repo
   ```
-- [uv](https://docs.astral.sh/uv/getting-started/installation/) (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
-- Docker (for the containerised path)
+  SigNoz UI → **http://localhost:8080** | OTLP → `localhost:4317`
+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) — `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Docker 20.10+ with Compose v2
 
 ### Option A — Docker (recommended)
 
 ```bash
-git clone https://github.com/<you>/hyrax.git
+git clone https://github.com/vivekjami/hyrax.git
 cd hyrax
-cp .env.example .env          # edit OTEL_EXPORTER_OTLP_ENDPOINT if needed
+cp .env.example .env
 docker compose up -d
 ```
 
@@ -75,16 +77,16 @@ Hyrax listens on `:5050`. Point your orchestrator at it:
 
 ```bash
 export OPENLINEAGE_URL=http://localhost:5050
-dbt-ol run                    # dbt with openlineage-dbt installed
+dbt-ol run
 ```
 
 ### Option B — uv (local dev)
 
 ```bash
-git clone https://github.com/<you>/hyrax.git
+git clone https://github.com/vivekjami/hyrax.git
 cd hyrax
-uv sync                       # installs runtime deps
-uv sync --extra demo          # adds dbt-duckdb + openlineage-dbt
+uv sync
+uv sync --extra demo
 uv run python -m hyrax.listener
 ```
 
@@ -94,7 +96,7 @@ uv run python -m hyrax.listener
 ./demo/run_demo.sh
 ```
 
-This runs a 6-model DuckDB dbt project (raw → staging → marts over 100 real e-commerce orders) with OpenLineage emission, then opens a health summary. Open SigNoz at `http://localhost:3301` and navigate to Traces — your pipeline appears as a distributed trace within seconds.
+This runs a 6-model DuckDB dbt project (raw → staging → marts, 100 real e-commerce records) with OpenLineage emission. Open SigNoz at **http://localhost:8080** → Traces — your pipeline appears as a distributed trace within seconds.
 
 ---
 
